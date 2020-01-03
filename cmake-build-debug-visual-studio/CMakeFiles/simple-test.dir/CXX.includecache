@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/miyuki.vectorize/vectorize.hpp
+array
+-
+type_traits
+-
+functional
+-
+xmmintrin.h
+-
+immintrin.h
+-
+cstring
+-
+
+C:/Users/xiaoc/CLionProjects/miyuki.vectorize/tests/simple-test.cpp
+miyuki.vectorize/vectorize.hpp
+-
+iostream
+-
+

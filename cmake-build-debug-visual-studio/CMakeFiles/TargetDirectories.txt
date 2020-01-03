@@ -1,0 +1,3 @@
+C:/Users/xiaoc/CLionProjects/miyuki.vectorize/cmake-build-debug-visual-studio/CMakeFiles/simple-test.dir
+C:/Users/xiaoc/CLionProjects/miyuki.vectorize/cmake-build-debug-visual-studio/CMakeFiles/edit_cache.dir
+C:/Users/xiaoc/CLionProjects/miyuki.vectorize/cmake-build-debug-visual-studio/CMakeFiles/rebuild_cache.dir
