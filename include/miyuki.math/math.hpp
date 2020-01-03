@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef MIYUKI_VECTORIZE_VECTORIZE_HPP
-#define MIYUKI_VECTORIZE_VECTORIZE_HPP
+#ifndef MIYUKI_MATH_MATH_HPP
+#define MIYUKI_MATH_MATH_HPP
 
 #include <array>
 #include <type_traits>
@@ -29,8 +29,9 @@
 #include <xmmintrin.h>
 #include <immintrin.h>
 #include <cstring>
+#include <cmath>
 
-namespace miyuki::vectorize {
+namespace miyuki::math {
 
 
     template<class T, int N>
@@ -60,6 +61,29 @@ namespace miyuki::vectorize {
         }
         return ret;
     }
+
+#define MYK_VEC_GEN_MATH_FUNC(func)  friend self_type func (const self_type & v){\
+                                        return apply([](const value_type &a)->value_type{\
+                                                    return func(a);\
+                                                }, v); \
+                                        }
+#define MYK_VEC_GEN_MATH_FUNC2(func) friend self_type func(const self_type & lhs,const self_type & rhs ) {\
+                                        return apply([](const value_type &a, const value_type &b)->value_type{\
+                                            return func(a,b);\
+                                        }, lhs, rhs); \
+                                    }
+#define MYK_VEC_GEN_MATH_FUNCS() \
+    MYK_VEC_GEN_MATH_FUNC(sin) \
+    MYK_VEC_GEN_MATH_FUNC(cos) \
+    MYK_VEC_GEN_MATH_FUNC(tan) \
+    MYK_VEC_GEN_MATH_FUNC(atan) \
+    MYK_VEC_GEN_MATH_FUNC(exp) \
+    MYK_VEC_GEN_MATH_FUNC(log) \
+    MYK_VEC_GEN_MATH_FUNC(asin) \
+    MYK_VEC_GEN_MATH_FUNC(acos) \
+    MYK_VEC_GEN_MATH_FUNC(sqrt) \
+    MYK_VEC_GEN_MATH_FUNC(abs) \
+    MYK_VEC_GEN_MATH_FUNC2(pow)
 
 
 #define MYK_VEC_ARR_GEN_OP_(op) friend self_type operator op (const self_type & lhs,const self_type & rhs ) {\
@@ -112,6 +136,7 @@ namespace miyuki::vectorize {
         MYK_VEC_GEN_BASIC_OPS()
 
         MYK_VEC_GEN_BASIC_ASSIGN_OPS()
+
     };
 
 #define MYK_VEC_GEN_ACCESS(Name, Index) \
@@ -126,6 +151,8 @@ namespace miyuki::vectorize {
         MYK_VEC_GEN_BASIC_OPS()
 
         MYK_VEC_GEN_BASIC_ASSIGN_OPS()
+
+        MYK_VEC_GEN_MATH_FUNCS()
     };
 
     class Float4Base {
@@ -202,6 +229,8 @@ namespace miyuki::vectorize {
 
 
         MYK_VEC_GEN_BASIC_ASSIGN_OPS()
+
+
     };
 
 
@@ -212,6 +241,9 @@ namespace miyuki::vectorize {
         union {
             float s[8];
             __m256 m;
+            struct {
+                __m128 lo, hi;
+            };
         };
 
         explicit Float8Base(const float &v) : m(_mm256_broadcast_ss(&v)) {}
@@ -259,7 +291,6 @@ namespace miyuki::vectorize {
             return Float8Base(_mm256_cmp_ps((__m256) lhs, (__m256) rhs, _CMP_GT_OQ));
         }
 
-
         MYK_VEC_GEN_BASIC_ASSIGN_OPS()
     };
 
@@ -268,7 +299,11 @@ namespace miyuki::vectorize {
     template<>
     class Array<float, 4> : public Float4Base {
         static const int N = 4;
+        using self_type = Array<float, 4>;
+        using value_type = float;
     public:
+        Array(const Float4Base &v) : Float4Base(v) {}
+
         using Float4Base::Float4Base;
 
         MYK_VEC_GEN_ACCESS(x, 0)
@@ -279,12 +314,17 @@ namespace miyuki::vectorize {
 
         MYK_VEC_GEN_ACCESS(w, 3)
 
+        MYK_VEC_GEN_MATH_FUNCS()
     };
 
     template<>
     class Array<float, 3> : public Float4Base {
         static const int N = 3;
+        using self_type = Array<float, 3>;
+        using value_type = float;
     public:
+        Array(const Float4Base &v) : Float4Base(v) {}
+
         using Float4Base::Float4Base;
 
         MYK_VEC_GEN_ACCESS(x, 0)
@@ -292,6 +332,8 @@ namespace miyuki::vectorize {
         MYK_VEC_GEN_ACCESS(y, 1)
 
         MYK_VEC_GEN_ACCESS(z, 2)
+
+        MYK_VEC_GEN_MATH_FUNCS()
     };
 
     template<class T, size_t N>
@@ -304,15 +346,19 @@ namespace miyuki::vectorize {
     }
 
     template<class T, size_t N>
+    T length(const Array<T, N> &v) {
+        return sqrt(dot(v, v));
+    }
+
+    template<class T, size_t N>
     Array<T, N> normalize(const Array<T, N> &v) {
         return v / Array<T, N>(dot(v, v));
     }
 
     template<class T>
-    T cross(const Array<T, 3> &v1, const Array<T, 3> &v2) {
+    Array<T, 3> cross(const Array<T, 3> &v1, const Array<T, 3> &v2) {
         return {v1[1] * v2[2] - v1[2] * v2[1], v1[2] * v2[0] - v1[0] * v2[2], v1[0] * v2[1] - v1[1] * v2[0]};
     }
-
 
     template<class T>
     class Matrix4 {
@@ -340,7 +386,7 @@ namespace miyuki::vectorize {
             return matrix4;
         }
 
-        static Matrix4 scale(const T & k) {
+        static Matrix4 scale(const T &k) {
             Matrix4 matrix4;
             for (int i = 0; i < 4; i++) {
                 for (int j = 0; j < 4; j++) {
@@ -349,27 +395,33 @@ namespace miyuki::vectorize {
             }
             return matrix4;
         }
-        static Matrix4 rotate(const Vec3 &axis, const T& angle) {
+
+        static Matrix4 rotate(const Vec3 &axis, const T &angle) {
             const auto zero = T(0.0f);
             const auto one = T(1.0f);
-            const Float s = sin(angle);
-            const Float c = cos(angle);
-            const Float oc = one - c;
+            const T s = sin(angle);
+            const T c = cos(angle);
+            const T oc = one - c;
             T r[4][4] = {
-                    {oc * axis.x * axis.x + c, oc * axis.x * axis.y - axis.z * s, oc * axis.z * axis.x + axis.y * s, zero},
-                    {oc * axis.x * axis.y + axis.z * s, oc * axis.y * axis.y + c, oc * axis.y * axis.z - axis.x * s, zero},
-                    {oc * axis.z * axis.x - axis.y * s, oc * axis.y * axis.z + axis.x * s, oc * axis.z * axis.z + c, zero},
-                    {zero,zero,zero,one}};
+                    {oc * axis.x * axis.x + c,          oc * axis.x * axis.y - axis.z * s,
+                                                                                           oc * axis.z * axis.x +
+                                                                                           axis.y * s, zero},
+                    {oc * axis.x * axis.y + axis.z * s, oc * axis.y * axis.y + c,          oc * axis.y * axis.z -
+                                                                                           axis.x * s, zero},
+                    {oc * axis.z * axis.x - axis.y * s, oc * axis.y * axis.z + axis.x * s, oc * axis.z * axis.z +
+                                                                                           c,          zero},
+                    {zero,                              zero,                              zero,       one}};
             Matrix4 m;
             std::memcpy(&m, &r, sizeof(T) * 16);
             return m;
         }
-        static Matrix4 translate(const Vec3 & v) {
+
+        static Matrix4 translate(const Vec3 &v) {
             Matrix4 m = identity();
             m[0][3] = v[0];
             m[1][3] = v[1];
             m[2][3] = v[2];
-            return  m;
+            return m;
         }
 
         Matrix4 inverse() const {
@@ -428,12 +480,6 @@ namespace miyuki::vectorize {
 
             det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
 
-            if (det == 0) {
-                if (suc) {
-                    *suc = false;
-                }
-            }
-
             det = T(1.0) / det;
 
             Matrix4 <T> out;
@@ -455,15 +501,15 @@ namespace miyuki::vectorize {
 
         Matrix4 &operator*=(const Matrix4 &rhs) {
             auto m = *this * rhs;
-            std::memcpy(this, m, sizeof(T* 16));
+            std::memcpy(this, m, sizeof(T) * 16);
             return *this;
         }
 
         Array<T, 4> operator*(const Array<T, 4> &v) const {
-            return Array<T, 4>{dot(_rows[0],v),
-                               dot(_rows[1],v),
-                               dot(_rows[2],v),
-                               dot(_rows[3],v)};
+            return Array<T, 4>{dot(_rows[0], v),
+                               dot(_rows[1], v),
+                               dot(_rows[2], v),
+                               dot(_rows[3], v)};
         }
 
         Array<T, 4> column(size_t i) const {
@@ -473,7 +519,7 @@ namespace miyuki::vectorize {
 }
 
 namespace miyuki {
-#define MYK_VEC_DECL_PRIMITIVE(TY, N) using TY##N = vectorize::Array<TY, N>;
+#define MYK_VEC_DECL_PRIMITIVE(TY, N) using TY##N = math::Array<TY, N>;
     MYK_VEC_DECL_PRIMITIVE(bool, 2)
     MYK_VEC_DECL_PRIMITIVE(bool, 3)
     MYK_VEC_DECL_PRIMITIVE(bool, 4)
@@ -495,9 +541,4 @@ namespace miyuki {
 }
 
 
-#define MYK_VEC_STRUCT_BEGIN(Struct) template<int NElem> struct T##Struct { using Base = Struct;
-#define MYK_VEC_MEMBER(Name) typename miyuki::vectorize::detail::to_array<decltype(Base::Name),NElem>::type Name;
-#define MYK_VEC_METHOD(Ret, Name, ...) Ret Name()
-#define MYK_VEC_STRUCT_END };
-
-#endif //MIYUKI_VECTORIZE_VECTORIZE_HPP
+#endif //MIYUKI_MATH_MATH_HPP

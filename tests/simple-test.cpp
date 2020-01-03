@@ -20,18 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <miyuki.vectorize/vectorize.hpp>
+#include <miyuki.math/math.hpp>
 #include <iostream>
 
 struct Foo {
     int a;
     int b;
 };
-
-MYK_VEC_STRUCT_BEGIN(Foo)
-    MYK_VEC_MEMBER(a)
-    MYK_VEC_MEMBER(b)
-MYK_VEC_STRUCT_END
 
 int main() {
     using namespace miyuki;
@@ -41,6 +36,10 @@ int main() {
         return 1;
     };
     float3 a, b;
-    using Matrix4f = vectorize::Matrix4<float>;
+    using Matrix4f = math::Matrix4<float>;
     Matrix4f m;
+    math::Array<float, 3> v;
+    v = v + v;
+    v = sin(v);
+    v = cross(v, v);
 }
