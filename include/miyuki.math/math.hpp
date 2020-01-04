@@ -32,17 +32,20 @@
 #include <cmath>
 
 namespace miyuki::math {
-   using std::sin;
-   using std::cos;
-   using std::tan;
-   using std::atan;
-   using std::exp;
-   using std::log;
-   using std::asin;
-   using std::acos;
-   using std::sqrt;
-   using std::abs;
-   using std::pow;
+    using std::sin;
+    using std::cos;
+    using std::tan;
+    using std::atan;
+    using std::exp;
+    using std::log;
+    using std::asin;
+    using std::acos;
+    using std::sqrt;
+    using std::abs;
+    using std::pow;
+    using std::max;
+    using std::min;
+
     template<class T, int N>
     class Array;
 
@@ -138,10 +141,10 @@ namespace miyuki::math {
         Array() = default;
 
 
-        template<class U, int M, typename = std::enable_if_t<std::is_convertible_v<U, T>&& M <= N, void>>
+        template<class U, int M, typename = std::enable_if_t<std::is_convertible_v<U, T> && M <= N, void>>
         Array(const Array<U, M> &v) {
             for (int i = 0; i < M; i++) {
-                (*this)[i] = (T)v[i];
+                (*this)[i] = (T) v[i];
             }
         }
 
@@ -154,7 +157,8 @@ namespace miyuki::math {
         }
 
         template<class First, class Second, class... Rest>
-        Array(const First &first,const Second &second, const Rest &... rest):std::array<T, N>({T(first), T(second), T(rest)...}) {}
+        Array(const First &first, const Second &second, const Rest &... rest):std::array<T, N>(
+                {T(first), T(second), T(rest)...}) {}
 
         Array(const T &value) {
             for (auto &i: *this) {
@@ -178,12 +182,13 @@ namespace miyuki::math {
     public:
         Array() = default;
 
-        template<class U, int M, typename = std::enable_if_t<std::is_convertible_v<U, float>&& M <= N, void>>
+        template<class U, int M, typename = std::enable_if_t<std::is_convertible_v<U, float> && M <= N, void>>
         Array(const Array<U, M> &v) {
             for (int i = 0; i < M; i++) {
-                (*this)[i] = (float)v[i];
+                (*this)[i] = (float) v[i];
             }
         }
+
         template<class T>
         Array(std::initializer_list<T> list) {
             auto it = list.begin();
@@ -194,7 +199,8 @@ namespace miyuki::math {
         }
 
         template<class First, class Second, class... Rest>
-        Array(const First &first,const Second &second, const Rest &... rest):std::array<float, N>({float(first), float(second), float(rest)...}) {}
+        Array(const First &first, const Second &second, const Rest &... rest):std::array<float, N>(
+                {float(first), float(second), float(rest)...}) {}
 
         Array(const float &value) {
             for (auto &i: *this) {
@@ -212,6 +218,7 @@ namespace miyuki::math {
     };
 
 
+    template<class Derived>
     class Float4Base {
         using self_type = Float4Base;
         using value_type = float;
@@ -252,36 +259,36 @@ namespace miyuki::math {
             return m;
         };
 
-        friend Float4Base operator+(const Float4Base &lhs, const Float4Base &rhs) {
-            return Float4Base(_mm_add_ps((__m128) lhs, (__m128) rhs));
+        friend Derived operator+(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm_add_ps((__m128) lhs, (__m128) rhs));
         }
 
-        friend Float4Base operator-(const Float4Base &lhs, const Float4Base &rhs) {
-            return Float4Base(_mm_sub_ps((__m128) lhs, (__m128) rhs));
+        friend Derived operator-(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm_sub_ps((__m128) lhs, (__m128) rhs));
         }
 
-        friend Float4Base operator*(const Float4Base &lhs, const Float4Base &rhs) {
-            return Float4Base(_mm_mul_ps((__m128) lhs, (__m128) rhs));
+        friend Derived operator*(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm_mul_ps((__m128) lhs, (__m128) rhs));
         }
 
-        friend Float4Base operator/(const Float4Base &lhs, const Float4Base &rhs) {
-            return Float4Base(_mm_div_ps((__m128) lhs, (__m128) rhs));
+        friend Derived operator/(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm_div_ps((__m128) lhs, (__m128) rhs));
         }
 
-        friend Float4Base operator<(const Float4Base &lhs, const Float4Base &rhs) {
-            return Float4Base(_mm_cmplt_ps((__m128) lhs, (__m128) rhs));
+        friend Derived operator<(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm_cmplt_ps((__m128) lhs, (__m128) rhs));
         }
 
-        friend Float4Base operator<=(const Float4Base &lhs, const Float4Base &rhs) {
-            return Float4Base(_mm_cmple_ps((__m128) lhs, (__m128) rhs));
+        friend Derived operator<=(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm_cmple_ps((__m128) lhs, (__m128) rhs));
         }
 
-        friend Float4Base operator>(const Float4Base &lhs, const Float4Base &rhs) {
-            return Float4Base(_mm_cmpgt_ps((__m128) lhs, (__m128) rhs));
+        friend Derived operator>(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm_cmpgt_ps((__m128) lhs, (__m128) rhs));
         }
 
-        friend Float4Base operator>=(const Float4Base &lhs, const Float4Base &rhs) {
-            return Float4Base(_mm_cmpge_ps((__m128) lhs, (__m128) rhs));
+        friend Derived operator>=(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm_cmpge_ps((__m128) lhs, (__m128) rhs));
         }
 
 
@@ -291,8 +298,9 @@ namespace miyuki::math {
     };
 
 
+    template<class Derived>
     class Float8Base {
-        using self_type = Float8Base;
+        using self_type = Float8Base<Derived>;
         using value_type = float;
     public:
         union {
@@ -316,46 +324,46 @@ namespace miyuki::math {
             return m;
         };
 
-        friend Float8Base operator+(const Float8Base &lhs, const Float8Base &rhs) {
-            return Float8Base(_mm256_add_ps((__m256) lhs, (__m256) rhs));
+        friend Derived operator+(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm256_add_ps((__m256) lhs, (__m256) rhs));
         }
 
-        friend Float8Base operator-(const Float8Base &lhs, const Float8Base &rhs) {
-            return Float8Base(_mm256_sub_ps((__m256) lhs, (__m256) rhs));
+        friend Derived operator-(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm256_sub_ps((__m256) lhs, (__m256) rhs));
         }
 
-        friend Float8Base operator*(const Float8Base &lhs, const Float8Base &rhs) {
-            return Float8Base(_mm256_mul_ps((__m256) lhs, (__m256) rhs));
+        friend Derived operator*(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm256_mul_ps((__m256) lhs, (__m256) rhs));
         }
 
-        friend Float8Base operator/(const Float8Base &lhs, const Float8Base &rhs) {
-            return Float8Base(_mm256_div_ps((__m256) lhs, (__m256) rhs));
+        friend Derived operator/(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm256_div_ps((__m256) lhs, (__m256) rhs));
         }
 
-        friend Float8Base operator<(const Float8Base &lhs, const Float8Base &rhs) {
-            return Float8Base(_mm256_cmp_ps((__m256) lhs, (__m256) rhs, _CMP_LT_OQ));
+        friend Derived operator<(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm256_cmp_ps((__m256) lhs, (__m256) rhs, _CMP_LT_OQ));
         }
 
-        friend Float8Base operator<=(const Float8Base &lhs, const Float8Base &rhs) {
-            return Float8Base(_mm256_cmp_ps((__m256) lhs, (__m256) rhs, _CMP_LE_OQ));
+        friend Derived operator<=(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm256_cmp_ps((__m256) lhs, (__m256) rhs, _CMP_LE_OQ));
         }
 
-        friend Float8Base operator>(const Float8Base &lhs, const Float8Base &rhs) {
-            return Float8Base(_mm256_cmp_ps((__m256) lhs, (__m256) rhs, _CMP_GT_OQ));
+        friend Derived operator>(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm256_cmp_ps((__m256) lhs, (__m256) rhs, _CMP_GT_OQ));
         }
 
-        friend Float8Base operator>=(const Float8Base &lhs, const Float8Base &rhs) {
-            return Float8Base(_mm256_cmp_ps((__m256) lhs, (__m256) rhs, _CMP_GT_OQ));
+        friend Derived operator>=(const Derived &lhs, const Derived &rhs) {
+            return Derived(_mm256_cmp_ps((__m256) lhs, (__m256) rhs, _CMP_GT_OQ));
         }
 
         MYK_VEC_GEN_BASIC_ASSIGN_OPS()
     };
 
-    static_assert(sizeof(__m128) == sizeof(Float4Base));
+    // static_assert(sizeof(__m128) == sizeof(Float4Base));
 
 
     template<>
-    class Array<float, 3> : public Float4Base {
+    class Array<float, 3> : public Float4Base<Array<float, 3>> {
         static const int N = 3;
         using self_type = Array<float, 3>;
         using value_type = float;
@@ -385,8 +393,10 @@ namespace miyuki::math {
         MYK_VEC_GEN_MATH_FUNCS()
     };
 
+    static_assert(sizeof(Array<float, 3>) == sizeof(__m128));
+
     template<>
-    class Array<float, 4> : public Float4Base {
+    class Array<float, 4> : public Float4Base<Array<float, 4>> {
         static const int N = 4;
         using self_type = Array<float, 4>;
         using value_type = float;
@@ -404,6 +414,35 @@ namespace miyuki::math {
 
         MYK_VEC_GEN_MATH_FUNCS()
     };
+
+    static_assert(sizeof(Array<float, 4>) == sizeof(__m128));
+
+    template<class T>
+    struct array_length {
+        static const int value = 1;
+    };
+
+    template<class T, int N>
+    struct array_length<Array<T, N>> {
+        static const int value = N;
+    };
+
+    template<class T, int N>
+    struct to_array {
+        using type = Array<T, N>;
+    };
+
+    template<class T>
+    struct to_array<T, 1> {
+        using type = T;
+    };
+
+    template<class T, int N>
+    using TArray = typename to_array<T, N>::type;
+
+
+    template<class T>
+    inline constexpr int LengthOf = array_length<T>::value;
 
     template<class T, int N>
     T dot(const Array<T, N> &a, const Array<T, N> &b) {
@@ -430,19 +469,24 @@ namespace miyuki::math {
     }
 
     template<class T, int N>
-    T clamp(const Array<T, N> &x, const Array<T, N> &a, const Array<T, N> &b) {
-        return apply(std::clamp<T>, x, a, b);
+    Array<T, N> clamp(const Array<T, N> &x, const Array<T, N> &a, const Array<T, N> &b) {
+        return apply([](const T &a, const T &b, const T &c) -> T { return std::clamp(a, b, c); }, x, a, b);
     }
 
     template<class T, int N>
-    T min(const Array<T, N> &a, const Array<T, N> &b) {
-        return apply(std::min<T>, a, b);
+    Array<T, N> min(const Array<T, N> &a, const Array<T, N> &b) {
+        return apply([](const T &a, const T &b) -> T { return std::min(a, b); }, a, b);
     }
 
 
     template<class T, int N>
-    T max(const Array<T, N> &a, const Array<T, N> &b) {
-        return apply(std::max<T>, a, b);
+    Array<T, N> max(const Array<T, N> &a, const Array<T, N> &b) {
+        return apply([](const T &a, const T &b) -> T { return std::max(a, b); }, a, b);
+    }
+
+    template<int N>
+    Array<float, N> mod(const Array<float, N> &a, const Array<float, N> &b) {
+        return apply([](const float &a, const float &b) -> float { return std::fmod(a, b); }, a, b);
     }
 
     template<class T>
@@ -581,8 +625,8 @@ namespace miyuki::math {
 
         Matrix4 operator*(const Matrix4 &rhs) const {
             Matrix4 m;
-            for (size_t i = 0; i < 4; i++) {
-                for (size_t j = 0; j < 4; j++) {
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
                     m._rows[i][j] = dot(_rows[i], rhs.column(j));
                 }
             }
@@ -602,15 +646,15 @@ namespace miyuki::math {
                                dot(_rows[3], v)};
         }
 
-        Array<T, 4> column(size_t i) const {
+        Array<T, 4> column(int i) const {
             return Array<T, 4>{_rows[0][i], _rows[1][i], _rows[2][i], _rows[3][i]};
         }
 
-        const Array<T, 4> &operator[](size_t i) const {
+        const Array<T, 4> &operator[](int i) const {
             return _rows[i];
         }
 
-        Array<T, 4> &operator[](size_t i) {
+        Array<T, 4> &operator[](int i) {
             return _rows[i];
         }
 
@@ -698,6 +742,29 @@ namespace miyuki::math {
         Array<T, 3> &operator[](size_t i) {
             return _rows[i];
         }
+
+        Matrix3 operator*(const Matrix3 &rhs) const {
+            Matrix3 m;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    m._rows[i][j] = dot(_rows[i], rhs.column(j));
+                }
+            }
+            return m;
+        }
+
+        Matrix3 &operator*=(const Matrix3 &rhs) {
+            auto m = *this * rhs;
+            std::memcpy(this, m, sizeof(T) * 9);
+            return *this;
+        }
+
+        Array<T, 3> operator*(const Array<T, 3> &v) const {
+            return Array<T, 3>{dot(_rows[0], v),
+                               dot(_rows[1], v),
+                               dot(_rows[2], v)};
+        }
+
     };
 
     template<class T>
