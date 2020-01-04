@@ -105,12 +105,34 @@ namespace miyuki::math {
     MYK_VEC_ARR_GEN_OP_(>) \
     MYK_VEC_ARR_GEN_OP_(>=)
 
+#define MYK_VEC_GEN_ACCESS(Name, Index) \
+    value_type Name ()const {static_assert(Index < N, "component "#Name " is not available");return (*this)[Index];} \
+    value_type& Name() {static_assert(Index < N, "component "#Name " is not available");return (*this)[Index];}
+
+#define MYK_VEC_GEN_ACCESS_FUNCS() \
+    MYK_VEC_GEN_ACCESS(x, 0) \
+    MYK_VEC_GEN_ACCESS(y, 1) \
+    MYK_VEC_GEN_ACCESS(z, 2) \
+    MYK_VEC_GEN_ACCESS(w, 3) \
+    MYK_VEC_GEN_ACCESS(r, 0) \
+    MYK_VEC_GEN_ACCESS(g, 1) \
+    MYK_VEC_GEN_ACCESS(b, 2) \
+    MYK_VEC_GEN_ACCESS(a, 3)
+
     template<class T, int N>
     class Array : public std::array<T, N> {
         using value_type = T;
         using self_type = Array<T, N>;
     public:
         Array() = default;
+
+
+        template<class U, int M, typename = std::enable_if_t<std::is_convertible_v<U, T>&& M <= N, void>>
+        Array(const Array<U, M> &v) {
+            for (int i = 0; i < M; i++) {
+                (*this)[i] = (T)v[i];
+            }
+        }
 
         Array(std::initializer_list<T> list) {
             auto it = list.begin();
@@ -120,7 +142,10 @@ namespace miyuki::math {
             }
         }
 
-        explicit Array(const T &value) {
+        template<class First, class Second, class... Rest>
+        Array(const First &first,const Second &second, const Rest &... rest):std::array<T, N>({T(first), T(second), T(rest)...}) {}
+
+        Array(const T &value) {
             for (auto &i: *this) {
                 i = value;
             }
@@ -130,23 +155,51 @@ namespace miyuki::math {
 
         MYK_VEC_GEN_BASIC_ASSIGN_OPS()
 
+        MYK_VEC_GEN_ACCESS_FUNCS()
+
     };
 
-#define MYK_VEC_GEN_ACCESS(Name, Index) \
-    auto Name ()const {static_assert(Index < N, "component "#Name "is not available");return this->s[Index];} \
-    auto& Name() {static_assert(Index < N, "component "#Name "is not available");return this->s[Index];}
 
     template<int N>
     class Array<float, N> : public std::array<float, N> {
         using value_type = float;
         using self_type = Array;
     public:
+        Array() = default;
+
+        template<class U, int M, typename = std::enable_if_t<std::is_convertible_v<U, float>&& M <= N, void>>
+        Array(const Array<U, M> &v) {
+            for (int i = 0; i < M; i++) {
+                (*this)[i] = (float)v[i];
+            }
+        }
+        template<class T>
+        Array(std::initializer_list<T> list) {
+            auto it = list.begin();
+            for (int i = 0; i < 4; i++) {
+                (*this)[i] = *it;
+                it++;
+            }
+        }
+
+        template<class First, class Second, class... Rest>
+        Array(const First &first,const Second &second, const Rest &... rest):std::array<float, N>({float(first), float(second), float(rest)...}) {}
+
+        Array(const float &value) {
+            for (auto &i: *this) {
+                i = value;
+            }
+        }
+
         MYK_VEC_GEN_BASIC_OPS()
 
         MYK_VEC_GEN_BASIC_ASSIGN_OPS()
 
         MYK_VEC_GEN_MATH_FUNCS()
+
+        MYK_VEC_GEN_ACCESS_FUNCS()
     };
+
 
     class Float4Base {
         using self_type = Float4Base;
@@ -167,7 +220,7 @@ namespace miyuki::math {
 
         Float4Base() = default;
 
-        explicit Float4Base(const float &v) : m(_mm_broadcast_ss(&v)) {}
+        Float4Base(const float &v) : m(_mm_broadcast_ss(&v)) {}
 
         Float4Base(std::initializer_list<float> list) {
             auto it = list.begin();
@@ -239,7 +292,7 @@ namespace miyuki::math {
             };
         };
 
-        explicit Float8Base(const float &v) : m(_mm256_broadcast_ss(&v)) {}
+        Float8Base(const float &v) : m(_mm256_broadcast_ss(&v)) {}
 
         Float8Base(__m256 m) {
             auto n = m;
@@ -289,26 +342,6 @@ namespace miyuki::math {
 
     static_assert(sizeof(__m128) == sizeof(Float4Base));
 
-    template<>
-    class Array<float, 4> : public Float4Base {
-        static const int N = 4;
-        using self_type = Array<float, 4>;
-        using value_type = float;
-    public:
-        Array(const Float4Base &v) : Float4Base(v) {}
-
-        using Float4Base::Float4Base;
-
-        MYK_VEC_GEN_ACCESS(x, 0)
-
-        MYK_VEC_GEN_ACCESS(y, 1)
-
-        MYK_VEC_GEN_ACCESS(z, 2)
-
-        MYK_VEC_GEN_ACCESS(w, 3)
-
-        MYK_VEC_GEN_MATH_FUNCS()
-    };
 
     template<>
     class Array<float, 3> : public Float4Base {
@@ -318,6 +351,12 @@ namespace miyuki::math {
     public:
         Array(const Float4Base &v) : Float4Base(v) {}
 
+        Array(const float x, float y, float z) {
+            this->s[0] = x;
+            this->s[1] = y;
+            this->s[2] = z;
+        }
+
         using Float4Base::Float4Base;
 
         MYK_VEC_GEN_ACCESS(x, 0)
@@ -326,10 +365,36 @@ namespace miyuki::math {
 
         MYK_VEC_GEN_ACCESS(z, 2)
 
+        MYK_VEC_GEN_ACCESS(r, 0)
+
+        MYK_VEC_GEN_ACCESS(g, 1)
+
+        MYK_VEC_GEN_ACCESS(b, 2)
+
         MYK_VEC_GEN_MATH_FUNCS()
     };
 
-    template<class T, size_t N>
+    template<>
+    class Array<float, 4> : public Float4Base {
+        static const int N = 4;
+        using self_type = Array<float, 4>;
+        using value_type = float;
+    public:
+        Array(const Array<float, 3> &v, float w) {
+            memcpy(&m, &v, sizeof(float) * 3);
+            (*this)[3] = w;
+        }
+
+        Array(const Float4Base &v) : Float4Base(v) {}
+
+        using Float4Base::Float4Base;
+
+        MYK_VEC_GEN_ACCESS_FUNCS()
+
+        MYK_VEC_GEN_MATH_FUNCS()
+    };
+
+    template<class T, int N>
     T dot(const Array<T, N> &a, const Array<T, N> &b) {
         auto x = a[0] * b[0];
         for (auto i = 1; i < N; i++) {
@@ -338,12 +403,12 @@ namespace miyuki::math {
         return x;
     }
 
-    template<class T, size_t N>
+    template<class T, int N>
     T length(const Array<T, N> &v) {
         return sqrt(dot(v, v));
     }
 
-    template<class T, size_t N>
+    template<class T, int N>
     Array<T, N> normalize(const Array<T, N> &v) {
         return v / Array<T, N>(dot(v, v));
     }
@@ -351,6 +416,22 @@ namespace miyuki::math {
     template<class T>
     Array<T, 3> cross(const Array<T, 3> &v1, const Array<T, 3> &v2) {
         return {v1[1] * v2[2] - v1[2] * v2[1], v1[2] * v2[0] - v1[0] * v2[2], v1[0] * v2[1] - v1[1] * v2[0]};
+    }
+
+    template<class T, int N>
+    T clamp(const Array<T, N> &x, const Array<T, N> &a, const Array<T, N> &b) {
+        return apply(std::clamp<T>, x, a, b);
+    }
+
+    template<class T, int N>
+    T min(const Array<T, N> &a, const Array<T, N> &b) {
+        return apply(std::min<T>, a, b);
+    }
+
+
+    template<class T, int N>
+    T max(const Array<T, N> &a, const Array<T, N> &b) {
+        return apply(std::max<T>, a, b);
     }
 
     template<class T>
@@ -389,23 +470,28 @@ namespace miyuki::math {
             return matrix4;
         }
 
-        static Matrix4 rotate(const Vec3 &axis, const T &angle) {
+        static Matrix4 rotate(const T &angle, const Vec3 &axis) {
             const auto zero = T(0.0f);
             const auto one = T(1.0f);
             const T s = sin(angle);
             const T c = cos(angle);
             const T oc = one - c;
             T r[4][4] = {
-                    {oc * axis.x * axis.x + c,          oc * axis.x * axis.y - axis.z * s,
-                                                                                           oc * axis.z * axis.x +
-                                                                                           axis.y * s, zero},
-                    {oc * axis.x * axis.y + axis.z * s, oc * axis.y * axis.y + c,          oc * axis.y * axis.z -
-                                                                                           axis.x * s, zero},
-                    {oc * axis.z * axis.x - axis.y * s, oc * axis.y * axis.z + axis.x * s, oc * axis.z * axis.z +
-                                                                                           c,          zero},
-                    {zero,                              zero,                              zero,       one}};
+                    {oc * axis.x() * axis.x() + c,            oc * axis.x() * axis.y() - axis.z() * s,
+                                                                                                       oc * axis.z() *
+                                                                                                       axis.x() +
+                                                                                                       axis.y() *
+                                                                                                       s,    zero},
+                    {oc * axis.x() * axis.y() + axis.z() * s, oc * axis.y() * axis.y() + c,            oc * axis.y() *
+                                                                                                       axis.z() -
+                                                                                                       axis.x() *
+                                                                                                       s,    zero},
+                    {oc * axis.z() * axis.x() - axis.y() * s, oc * axis.y() * axis.z() + axis.x() * s, oc * axis.z() *
+                                                                                                       axis.z() +
+                                                                                                       c,    zero},
+                    {zero,                                    zero,                                    zero, one}};
             Matrix4 m;
-            std::memcpy(&m, &r, sizeof(T) * 16);
+            std::memcpy(&m, &r, sizeof(_rows));
             return m;
         }
 
@@ -418,7 +504,7 @@ namespace miyuki::math {
         }
 
         Matrix4 inverse() const {
-            auto m = reinterpret_cast<const T *>(_rows);
+            auto m = reinterpret_cast<const T *>(&_rows);
             T inv[16], det;
             int i;
 
@@ -476,7 +562,7 @@ namespace miyuki::math {
             det = T(1.0) / det;
 
             Matrix4 <T> out;
-            auto invOut = reinterpret_cast<T *>(out._rows);
+            auto invOut = reinterpret_cast<T *>(&out._rows);
             for (i = 0; i < 16; i++)
                 invOut[i] = inv[i] * det;
             return out;
@@ -486,7 +572,7 @@ namespace miyuki::math {
             Matrix4 m;
             for (size_t i = 0; i < 4; i++) {
                 for (size_t j = 0; j < 4; j++) {
-                    m._rows[i][j] = dot(_rows[i].rhs.column(j));
+                    m._rows[i][j] = dot(_rows[i], rhs.column(j));
                 }
             }
             return m;
@@ -531,7 +617,6 @@ namespace miyuki::math {
     template<class T>
     class Matrix3 {
         Array<Array<T, 3>, 3> _rows;
-        static_assert(sizeof(_rows) == sizeof(T) * 9);
         using Vec3 = Array<T, 3>;
     public:
         Matrix3() = default;
@@ -574,10 +659,11 @@ namespace miyuki::math {
             return m;
         }
 
-        Matrix3 inverse()const{
-            T det = (*this)[0][0] * (*this)[1][1] * (*this)[2][2] - (*this)[2[1] * (*this)[1][2] -
-                         (*this)[0][1] * (*this)[1][0] * (*this)[2][2] - (*this)[1[2] * (*this)[2][0] +
-                         (*this)[0][2] * (*this)[1][0] * (*this)[2][1] - (*this)[1[1] * (*this)[2][0];
+        Matrix3 inverse() const {
+            T det = (*this)[0][0] * (*this)[1][1] * (*this)[2][2] - (*this)[2][1] * (*this)[1][2] -
+                    (*this)[0][1] * (*this)[1][0] *
+                    (*this)[2][2] - (*this)[1][2] * (*this)[2][0] +
+                    (*this)[0][2] * (*this)[1][0] * (*this)[2][1] - (*this)[1][1] * (*this)[2][0];
 
             T invdet = T(1.0f) / det;
 
@@ -593,8 +679,35 @@ namespace miyuki::math {
             inv[2][2] = (*this)[0][0] * (*this)[1][1] - (*this)[1][0] * (*this)[0][1] * invdet;
             return inv;
         }
+
+        const Array<T, 3> &operator[](size_t i) const {
+            return _rows[i];
+        }
+
+        Array<T, 3> &operator[](size_t i) {
+            return _rows[i];
+        }
     };
 
+    template<class T>
+    Matrix4<T> inverse(const Matrix4<T> &m) {
+        return m.inverse();
+    }
+
+    template<class T>
+    Matrix3<T> inverse(const Matrix3<T> &m) {
+        return m.inverse();
+    }
+
+    template<class T>
+    Matrix4<T> transpose(const Matrix4<T> &m) {
+        return m.transpose();
+    }
+
+    template<class T>
+    Matrix3<T> transpose(const Matrix3<T> &m) {
+        return m.transpose();
+    }
 }
 
 namespace miyuki {
