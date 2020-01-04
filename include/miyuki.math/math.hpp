@@ -32,15 +32,8 @@
 #include <cmath>
 
 namespace miyuki::math {
-
-
     template<class T, int N>
     class Array;
-
-    constexpr int align4(int N) {
-        return (3 + N) & (-4);
-    }
-
 
     namespace detail {
         template<class T, int N>
@@ -102,14 +95,14 @@ namespace miyuki::math {
 
 #define MYK_VEC_GEN_BASIC_OPS() \
     MYK_VEC_ARR_GEN_OP_(+) \
-    MYK_VEC_ARR_GEN_OP_(-)\
-    MYK_VEC_ARR_GEN_OP_(*)\
-    MYK_VEC_ARR_GEN_OP_(/)\
+    MYK_VEC_ARR_GEN_OP_(-) \
+    MYK_VEC_ARR_GEN_OP_(*) \
+    MYK_VEC_ARR_GEN_OP_(/) \
     MYK_VEC_ARR_GEN_OP_(==)\
     MYK_VEC_ARR_GEN_OP_(!=)\
-    MYK_VEC_ARR_GEN_OP_(<)\
+    MYK_VEC_ARR_GEN_OP_(<) \
     MYK_VEC_ARR_GEN_OP_(<=)\
-    MYK_VEC_ARR_GEN_OP_(>)\
+    MYK_VEC_ARR_GEN_OP_(>) \
     MYK_VEC_ARR_GEN_OP_(>=)
 
     template<class T, int N>
@@ -579,6 +572,26 @@ namespace miyuki::math {
                 }
             }
             return m;
+        }
+
+        Matrix3 inverse()const{
+            T det = (*this)[0][0] * (*this)[1][1] * (*this)[2][2] - (*this)[2[1] * (*this)[1][2] -
+                         (*this)[0][1] * (*this)[1][0] * (*this)[2][2] - (*this)[1[2] * (*this)[2][0] +
+                         (*this)[0][2] * (*this)[1][0] * (*this)[2][1] - (*this)[1[1] * (*this)[2][0];
+
+            T invdet = T(1.0f) / det;
+
+            Matrix3 inv; // inverse of matrix m
+            inv[0][0] = (*this)[1][1] * (*this)[2][2] - (*this)[2][1] * (*this)[1][2] * invdet;
+            inv[0][1] = (*this)[0][2] * (*this)[2][1] - (*this)[0][1] * (*this)[2][2] * invdet;
+            inv[0][2] = (*this)[0][1] * (*this)[1][2] - (*this)[0][2] * (*this)[1][1] * invdet;
+            inv[1][0] = (*this)[1][2] * (*this)[2][0] - (*this)[1][0] * (*this)[2][2] * invdet;
+            inv[1][1] = (*this)[0][0] * (*this)[2][2] - (*this)[0][2] * (*this)[2][0] * invdet;
+            inv[1][2] = (*this)[1][0] * (*this)[0][2] - (*this)[0][0] * (*this)[1][2] * invdet;
+            inv[2][0] = (*this)[1][0] * (*this)[2][1] - (*this)[2][0] * (*this)[1][1] * invdet;
+            inv[2][1] = (*this)[2][0] * (*this)[0][1] - (*this)[0][0] * (*this)[2][1] * invdet;
+            inv[2][2] = (*this)[0][0] * (*this)[1][1] - (*this)[1][0] * (*this)[0][1] * invdet;
+            return inv;
         }
     };
 
