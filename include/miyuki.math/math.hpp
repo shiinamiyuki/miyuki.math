@@ -515,7 +515,73 @@ namespace miyuki::math {
         Array<T, 4> column(size_t i) const {
             return Array<T, 4>{_rows[0][i], _rows[1][i], _rows[2][i], _rows[3][i]};
         }
+
+        const Array<T, 4> &operator[](size_t i) const {
+            return _rows[i];
+        }
+
+        Array<T, 4> &operator[](size_t i) {
+            return _rows[i];
+        }
+
+        Matrix4 transpose() const {
+            Matrix4 m;
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    m[i][j] = (*this)[j][i];
+                }
+            }
+            return m;
+        }
     };
+
+    template<class T>
+    class Matrix3 {
+        Array<Array<T, 3>, 3> _rows;
+        static_assert(sizeof(_rows) == sizeof(T) * 9);
+        using Vec3 = Array<T, 3>;
+    public:
+        Matrix3() = default;
+
+        explicit Matrix3(const Matrix4<T> &mat4) {
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    _rows[i][j] = mat4[i][j];
+                }
+            }
+        }
+
+        Matrix3 transpose() const {
+            Matrix3 m;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    m[i][j] = (*this)[j][i];
+                }
+            }
+            return m;
+        }
+
+        static Matrix3 zero() {
+            Matrix3 m;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    m[i][j] = T(0.0f);
+                }
+            }
+            return m;
+        }
+
+        static Matrix3 identity() {
+            Matrix3 m;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    m[i][j] = i == j ? T(1.0f) : T(0.0f);
+                }
+            }
+            return m;
+        }
+    };
+
 }
 
 namespace miyuki {
