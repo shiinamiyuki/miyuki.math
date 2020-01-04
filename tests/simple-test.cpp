@@ -37,7 +37,7 @@ int main() {
     };
     float3 a, b;
     using Matrix4f = math::Matrix4<float>;
-    Matrix4f m;
+    Matrix4f m  = Matrix4f ::rotate(0.0f,float3(1.0f,0,0.0f));
     math::Array<float, 3> v;
     v = v + v;
     v = sin(v);

@@ -32,6 +32,17 @@
 #include <cmath>
 
 namespace miyuki::math {
+   using std::sin;
+   using std::cos;
+   using std::tan;
+   using std::atan;
+   using std::exp;
+   using std::log;
+   using std::asin;
+   using std::acos;
+   using std::sqrt;
+   using std::abs;
+   using std::pow;
     template<class T, int N>
     class Array;
 
