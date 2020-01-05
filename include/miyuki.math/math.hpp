@@ -45,6 +45,9 @@ namespace miyuki::math {
     using std::pow;
     using std::max;
     using std::min;
+    using std::floor;
+    using std::ceil;
+
 
     template<class T, int N>
     class Array;
@@ -60,7 +63,7 @@ namespace miyuki::math {
 
     template<class F, int N, class... Args>
     auto
-    apply(F &&f,
+    array_forward(F &&f,
           const Array<Args, N> &... args) -> typename detail::to_array<std::invoke_result_t<F, Args...>, N>::type {
         typename detail::to_array<std::invoke_result_t<F, Args...>, N>::type ret;
         for (auto i = 0; i < N; i++) {
@@ -70,12 +73,12 @@ namespace miyuki::math {
     }
 
 #define MYK_VEC_GEN_MATH_FUNC(func)  friend self_type func (const self_type & v){\
-                                        return apply([](const value_type &a)->value_type{\
+                                        return array_forward([](const value_type &a)->value_type{\
                                                     return func(a);\
                                                 }, v); \
                                         }
 #define MYK_VEC_GEN_MATH_FUNC2(func) friend self_type func(const self_type & lhs,const self_type & rhs ) {\
-                                        return apply([](const value_type &a, const value_type &b)->value_type{\
+                                        return array_forward([](const value_type &a, const value_type &b)->value_type{\
                                             return func(a,b);\
                                         }, lhs, rhs); \
                                     }
@@ -90,11 +93,13 @@ namespace miyuki::math {
     MYK_VEC_GEN_MATH_FUNC(acos) \
     MYK_VEC_GEN_MATH_FUNC(sqrt) \
     MYK_VEC_GEN_MATH_FUNC(abs) \
+    MYK_VEC_GEN_MATH_FUNC(floor) \
+    MYK_VEC_GEN_MATH_FUNC(ceil) \
     MYK_VEC_GEN_MATH_FUNC2(pow)
 
 
 #define MYK_VEC_ARR_GEN_OP_(op) friend self_type operator op (const self_type & lhs,const self_type & rhs ) {\
-                                        return apply([](const value_type &a, const value_type &b)->value_type{\
+                                        return array_forward([](const value_type &a, const value_type &b)->value_type{\
                                             return value_type(a op b);\
                                         }, lhs, rhs); \
                                 }
@@ -470,23 +475,23 @@ namespace miyuki::math {
 
     template<class T, int N>
     Array<T, N> clamp(const Array<T, N> &x, const Array<T, N> &a, const Array<T, N> &b) {
-        return apply([](const T &a, const T &b, const T &c) -> T { return std::clamp(a, b, c); }, x, a, b);
+        return array_forward([](const T &a, const T &b, const T &c) -> T { return std::clamp(a, b, c); }, x, a, b);
     }
 
     template<class T, int N>
     Array<T, N> min(const Array<T, N> &a, const Array<T, N> &b) {
-        return apply([](const T &a, const T &b) -> T { return std::min(a, b); }, a, b);
+        return array_forward([](const T &a, const T &b) -> T { return std::min(a, b); }, a, b);
     }
 
 
     template<class T, int N>
     Array<T, N> max(const Array<T, N> &a, const Array<T, N> &b) {
-        return apply([](const T &a, const T &b) -> T { return std::max(a, b); }, a, b);
+        return array_forward([](const T &a, const T &b) -> T { return std::max(a, b); }, a, b);
     }
 
-    template<int N>
-    Array<float, N> mod(const Array<float, N> &a, const Array<float, N> &b) {
-        return apply([](const float &a, const float &b) -> float { return std::fmod(a, b); }, a, b);
+    template<class T, int N>
+    Array<T, N> mod(const Array<T, N> &x, const Array<T, N> &y) {
+        return x - y * floor(x / y);
     }
 
     template<class T>
