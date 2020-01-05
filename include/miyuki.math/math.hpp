@@ -460,7 +460,7 @@ namespace miyuki::math {
 
     template<class T, int N>
     Array<T, N> normalize(const Array<T, N> &v) {
-        return v / Array<T, N>(dot(v, v));
+        return v / length(v);
     }
 
     template<class T>
